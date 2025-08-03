@@ -2,7 +2,8 @@
 # VirtualDJ-SliderLFO-Win64
 A VirtualDJ Audio Effect for Windows 64-bit (.dll)
 
-Move a slider in VirtualDJ by using a LFO
+Move a VirtualDJ slider by using a LFO
+
 
 
 
