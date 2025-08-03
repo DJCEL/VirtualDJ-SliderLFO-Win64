@@ -6,6 +6,8 @@ CSliderLFO::CSliderLFO()
 	m_Delay = 0;
 	m_LFOcurve = SINE;
 	m_SliderType = 0;
+	m_SliderTypeValueStart = 0;
+	m_Inverted = 0;
 	ZeroMemory(m_SliderValue, 2 * sizeof(float));
 	ZeroMemory(m_SliderTypeName, 50 * sizeof(char));
 }
@@ -19,9 +21,11 @@ HRESULT VDJ_API CSliderLFO::OnLoad()
 {	
 	HRESULT hr = S_FALSE;
 
-	hr = DeclareParameterSlider(&m_SliderValue[0], ID_SLIDER_1, "LFO Rate", "R",0.5f);
-	hr = DeclareParameterSlider(&m_SliderValue[1], ID_SLIDER_2, "LFO Curve", "C", 0.0f);
-	hr = DeclareParameterSlider(&m_SliderValue[2], ID_SLIDER_3, "VDJscript", "S", 0.0f);
+	hr = DeclareParameterSlider(&m_SliderValue[0], ID_SLIDER_1, "LFO Rate", "LR",0.5f);
+	hr = DeclareParameterSlider(&m_SliderValue[1], ID_SLIDER_2, "LFO Curve", "LC", 0.0f);
+	hr = DeclareParameterSlider(&m_SliderValue[2], ID_SLIDER_3, "VDJscript", "VS", 0.0f);
+	hr = DeclareParameterSwitch(&m_Inverted, ID_SWITCH_1, "Inverted", "INV", 0.0f);
+	hr = DeclareParameterSwitch(&m_Reset, ID_SWITCH_2, "Reset", "R", 1.0f);
 	
 	OnParameter(ID_INIT);
 	return S_OK;
@@ -66,7 +70,9 @@ HRESULT VDJ_API CSliderLFO::OnParameter(int id)
 //------------------------------------------------------------------------------
 HRESULT CSliderLFO::OnSlider(int id)
 {
+	HRESULT hr = S_OK;
 	int LFOcurve_value = 0;
+	double result = 0;
 
 	switch (id)
 	{
@@ -103,7 +109,41 @@ HRESULT CSliderLFO::OnSlider(int id)
 			break;
 
 		case ID_SLIDER_3:
+			if (m_Reset)
+			{
+				char vdjscript[100] = "\0";
+				sprintf_s(vdjscript, 100 * sizeof(char), "%s %.5f", m_SliderTypeName, m_SliderTypeValueStart);
+				SendCommand(vdjscript);
+			}
 			m_SliderType = int(1 + m_SliderValue[2] * (MAX_SLIDERTYPE - 1.0f));
+			switch (m_SliderType)
+			{
+				case 1:
+					wsprintf(m_SliderTypeName, "volume");
+					break;
+
+				case 2:
+					wsprintf(m_SliderTypeName, "crossfader");
+					break;
+
+				case 3:
+					wsprintf(m_SliderTypeName, "video_crossfader");
+					break;
+
+				case 4:
+					wsprintf(m_SliderTypeName, "video_fx_slider");
+					break;
+
+				case 5:
+					wsprintf(m_SliderTypeName, "master_balance");
+					break;
+			}
+			
+			hr = GetInfo(m_SliderTypeName, &result);
+			if (hr == S_OK)
+			{
+				m_SliderTypeValueStart = (float)result;
+			}
 			break;
 	}
 
@@ -141,22 +181,7 @@ HRESULT VDJ_API CSliderLFO::OnGetParameterString(int id, char *outParam, int out
 			}
 			break;
 
-
 		case ID_SLIDER_3:
-			switch (m_SliderType)
-			{
-				case 1:
-					wsprintf(m_SliderTypeName, "volume");
-					break;
-
-				case 2:
-					wsprintf(m_SliderTypeName, "crossfader");
-					break;
-
-				case 3:
-					wsprintf(m_SliderTypeName, "master_balance");
-					break;
-			}
 			sprintf_s(outParam, outParamSize, "%s", m_SliderTypeName);
 			break;
 
@@ -166,11 +191,26 @@ HRESULT VDJ_API CSliderLFO::OnGetParameterString(int id, char *outParam, int out
 //-------------------------------------------------------------------------------
 HRESULT VDJ_API CSliderLFO::OnStart()
 {
+	HRESULT hr = S_OK;
+	double result = 0;
+	hr = GetInfo(m_SliderTypeName, &result);
+	if (hr == S_OK)
+	{
+		m_SliderTypeValueStart = (float)result;
+	}
+	
 	return S_OK;
 }
 //------------------------------------------------------------------------------
 HRESULT VDJ_API CSliderLFO::OnStop()
 {
+	if (m_Reset)
+	{
+		char vdjscript[100] = "\0";
+		sprintf_s(vdjscript, 100 * sizeof(char), "%s %.5f", m_SliderTypeName, m_SliderTypeValueStart);
+		SendCommand(vdjscript);
+	}
+
 	return S_OK;
 }
 //------------------------------------------------------------------------------
@@ -183,6 +223,11 @@ HRESULT VDJ_API CSliderLFO::OnProcessSamples(float *buffer, int nb)
 
 	y = LFO(m_LFOcurve, xBeat);  // LFO sur 'Delay' beat(s)
 
+	if (m_Inverted)
+	{
+		y = 1.0f - y;
+	}
+
 	char vdjscript[100] = "\0";
 	sprintf_s(vdjscript, 100 * sizeof(char), "%s %.5f", m_SliderTypeName, y);
 	SendCommand(vdjscript);
@@ -192,31 +237,31 @@ HRESULT VDJ_API CSliderLFO::OnProcessSamples(float *buffer, int nb)
 //------------------------------------------------------------------------------
 float CSliderLFO::LFO(LFOCURVE type, double x)
 {
-	// unipolar LFO [0, 1]
+	// LFO curves for x in [0.0f , 1.0f] and y in [0.0f , 1.0f]
 
-	double ValLFO = 0.0f;
+	double y = 0.0f;
 
 	switch (type)
 	{
-	case SINE:
-		ValLFO = 0.5f + 0.5f * sin(2.0f * M_PI * (x - 0.25f));
-		break;
+		case SINE:
+			y = 0.5f + 0.5f * sin(2.0f * M_PI * (x - 0.25f));
+			break;
 
-	case SAWTOOTH:
-		ValLFO = fmod(x, 1.0);
-		//ValLFO = 1.0 - fmod(x, 1.0);
-		break;
+		case SAWTOOTH:
+			y = fmod(x, 1.0);
+			//ValLFO = 1.0 - fmod(x, 1.0);
+			break;
 
-	case TRIANGLE:
-		ValLFO = 1.0f - fabs(2.0 * fmod(x, 1.0) - 1.0);
-		break;
+		case TRIANGLE:
+			y = 1.0f - fabs(2.0 * fmod(x, 1.0) - 1.0);
+			break;
 
-	case SQUARE:
-		ValLFO = (fmod(x, 1.0) < 0.5) ? 1.0f : 0.0f;
-		break;
+		case SQUARE:
+			y = (fmod(x, 1.0) < 0.5) ? 1.0f : 0.0f;
+			break;
 	}
 
-	return float(ValLFO);
+	return float(y);
 }
 
 
