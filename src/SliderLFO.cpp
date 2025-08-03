@@ -29,8 +29,8 @@ HRESULT VDJ_API CSliderLFO::OnLoad()
 	hr = DeclareParameterSlider(&m_SliderValue[2], ID_SLIDER_3, "VDJscript", "VDJS", 0.0f);
 	hr = DeclareParameterSlider(&m_SliderValue[3], ID_SLIDER_4, "SliderMin", "SMIN", 0.0f);
 	hr = DeclareParameterSlider(&m_SliderValue[4], ID_SLIDER_5, "SliderMax", "SMAX", 1.0f);
-	hr = DeclareParameterSwitch(&m_Inverted, ID_SWITCH_1, "Inverted", "INV", 0.0f);
-	hr = DeclareParameterSwitch(&m_Reset, ID_SWITCH_2, "ResetOnChange", "R", 1.0f);
+	hr = DeclareParameterSwitch(&m_Reset, ID_SWITCH_1, "ResetOnChange", "R", 1.0f);
+	hr = DeclareParameterSwitch(&m_Inverted, ID_SWITCH_2, "Inverted", "INV", 0.0f);
 	
 	OnParameter(ID_INIT);
 	return S_OK;
