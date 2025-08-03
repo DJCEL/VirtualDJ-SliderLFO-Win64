@@ -8,6 +8,7 @@ CSliderLFO::CSliderLFO()
 	m_SliderType = 0;
 	m_SliderTypeValueStart = 0;
 	m_Inverted = 0;
+	m_Reset = 0;
 	ZeroMemory(m_SliderValue, 2 * sizeof(float));
 	ZeroMemory(m_SliderTypeName, 50 * sizeof(char));
 }
