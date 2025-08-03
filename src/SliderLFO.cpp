@@ -120,7 +120,7 @@ HRESULT CSliderLFO::OnSlider(int id)
 			switch (m_SliderType)
 			{
 				case 1:
-					wsprintf(m_SliderTypeName, "volume");
+					wsprintf(m_SliderTypeName, "level");
 					break;
 
 				case 2:
