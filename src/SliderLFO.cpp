@@ -25,8 +25,8 @@ HRESULT VDJ_API CSliderLFO::OnLoad()
 	HRESULT hr = S_FALSE;
 
 	hr = DeclareParameterSlider(&m_SliderValue[0], ID_SLIDER_1, "LFO Rate", "RATE",0.5f);
-	hr = DeclareParameterSlider(&m_SliderValue[1], ID_SLIDER_2, "LFO Curve", "CURVE", 0.0f);
-	hr = DeclareParameterSlider(&m_SliderValue[2], ID_SLIDER_3, "VDJscript", "SCRIPT", 0.0f);
+	hr = DeclareParameterSlider(&m_SliderValue[1], ID_SLIDER_2, "VDJscript", "SCRIPT", 0.0f);
+	hr = DeclareParameterSlider(&m_SliderValue[2], ID_SLIDER_3, "LFO Curve", "CURVE", 0.0f);
 	hr = DeclareParameterSlider(&m_SliderValue[3], ID_SLIDER_4, "SliderMin", "MIN", 0.0f);
 	hr = DeclareParameterSlider(&m_SliderValue[4], ID_SLIDER_5, "SliderMax", "MAX", 1.0f);
 	hr = DeclareParameterSwitch(&m_Reset, ID_SWITCH_1, "ResetOnChange", "R", 1.0f);
@@ -95,32 +95,13 @@ HRESULT CSliderLFO::OnSlider(int id)
 			break;
 
 		case ID_SLIDER_2:
-			LFOcurve_value = int(1.0f + m_SliderValue[1] * (MAX_LFOCURVE - 1.0f));
-			switch (LFOcurve_value)
-			{
-				case 1:
-					m_LFOcurve = SINE;
-					break;
-				case 2:
-					m_LFOcurve = TRIANGLE;
-					break;
-				case 3:
-					m_LFOcurve = SAWTOOTH;
-					break;
-				case 4:
-					m_LFOcurve = SQUARE;
-					break;
-			}
-			break;
-
-		case ID_SLIDER_3:
 			if (m_Reset)
 			{
 				char vdjscript[100] = "\0";
 				sprintf_s(vdjscript, 100 * sizeof(char), "%s %.5f", m_SliderTypeName, m_SliderTypeValueStart);
 				SendCommand(vdjscript);
 			}
-			m_SliderType = int(1 + m_SliderValue[2] * (MAX_SLIDERTYPE - 1.0f));
+			m_SliderType = int(1 + m_SliderValue[1] * (MAX_SLIDERTYPE - 1.0f));
 			switch (m_SliderType)
 			{
 				case 1:
@@ -184,6 +165,25 @@ HRESULT CSliderLFO::OnSlider(int id)
 			}
 			break;
 
+		case ID_SLIDER_3:
+			LFOcurve_value = int(1.0f + m_SliderValue[2] * (MAX_LFOCURVE - 1.0f));
+			switch (LFOcurve_value)
+			{
+			case 1:
+				m_LFOcurve = SINE;
+				break;
+			case 2:
+				m_LFOcurve = TRIANGLE;
+				break;
+			case 3:
+				m_LFOcurve = SAWTOOTH;
+				break;
+			case 4:
+				m_LFOcurve = SQUARE;
+				break;
+			}
+			break;
+
 		case ID_SLIDER_4:
 			m_SliderMin = m_SliderValue[3];
 			if (m_SliderMin > m_SliderMax) m_SliderMin = m_SliderMax - 0.001f;
@@ -211,6 +211,10 @@ HRESULT VDJ_API CSliderLFO::OnGetParameterString(int id, char *outParam, int out
 			break;
 
 		case ID_SLIDER_2:
+			sprintf_s(outParam, outParamSize, "%s", m_SliderTypeName);
+			break;
+
+		case ID_SLIDER_3:
 			switch (m_LFOcurve)
 			{
 			case SINE:
@@ -229,10 +233,6 @@ HRESULT VDJ_API CSliderLFO::OnGetParameterString(int id, char *outParam, int out
 				sprintf_s(outParam, outParamSize, "Square");
 				break;
 			}
-			break;
-
-		case ID_SLIDER_3:
-			sprintf_s(outParam, outParamSize, "%s", m_SliderTypeName);
 			break;
 
 		case ID_SLIDER_4:
