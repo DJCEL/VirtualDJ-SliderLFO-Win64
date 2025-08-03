@@ -24,11 +24,11 @@ HRESULT VDJ_API CSliderLFO::OnLoad()
 {	
 	HRESULT hr = S_FALSE;
 
-	hr = DeclareParameterSlider(&m_SliderValue[0], ID_SLIDER_1, "LFO Rate", "LFOR",0.5f);
-	hr = DeclareParameterSlider(&m_SliderValue[1], ID_SLIDER_2, "LFO Curve", "LFOC", 0.0f);
-	hr = DeclareParameterSlider(&m_SliderValue[2], ID_SLIDER_3, "VDJscript", "VDJS", 0.0f);
-	hr = DeclareParameterSlider(&m_SliderValue[3], ID_SLIDER_4, "SliderMin", "SMIN", 0.0f);
-	hr = DeclareParameterSlider(&m_SliderValue[4], ID_SLIDER_5, "SliderMax", "SMAX", 1.0f);
+	hr = DeclareParameterSlider(&m_SliderValue[0], ID_SLIDER_1, "LFO Rate", "RATE",0.5f);
+	hr = DeclareParameterSlider(&m_SliderValue[1], ID_SLIDER_2, "LFO Curve", "CURVE", 0.0f);
+	hr = DeclareParameterSlider(&m_SliderValue[2], ID_SLIDER_3, "VDJscript", "SCRIPT", 0.0f);
+	hr = DeclareParameterSlider(&m_SliderValue[3], ID_SLIDER_4, "SliderMin", "MIN", 0.0f);
+	hr = DeclareParameterSlider(&m_SliderValue[4], ID_SLIDER_5, "SliderMax", "MAX", 1.0f);
 	hr = DeclareParameterSwitch(&m_Reset, ID_SWITCH_1, "ResetOnChange", "R", 1.0f);
 	hr = DeclareParameterSwitch(&m_Inverted, ID_SWITCH_2, "Inverted", "INV", 0.0f);
 	
