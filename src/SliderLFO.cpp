@@ -9,7 +9,9 @@ CSliderLFO::CSliderLFO()
 	m_SliderTypeValueStart = 0;
 	m_Inverted = 0;
 	m_Reset = 0;
-	ZeroMemory(m_SliderValue, 2 * sizeof(float));
+	m_SliderMin = 0;
+	m_SliderMax = 0;
+	ZeroMemory(m_SliderValue, 5 * sizeof(float));
 	ZeroMemory(m_SliderTypeName, 50 * sizeof(char));
 }
 //-----------------------------------------------------------------------------
@@ -22,9 +24,11 @@ HRESULT VDJ_API CSliderLFO::OnLoad()
 {	
 	HRESULT hr = S_FALSE;
 
-	hr = DeclareParameterSlider(&m_SliderValue[0], ID_SLIDER_1, "LFO Rate", "LR",0.5f);
-	hr = DeclareParameterSlider(&m_SliderValue[1], ID_SLIDER_2, "LFO Curve", "LC", 0.0f);
-	hr = DeclareParameterSlider(&m_SliderValue[2], ID_SLIDER_3, "VDJscript", "VS", 0.0f);
+	hr = DeclareParameterSlider(&m_SliderValue[0], ID_SLIDER_1, "LFO Rate", "LFOR",0.5f);
+	hr = DeclareParameterSlider(&m_SliderValue[1], ID_SLIDER_2, "LFO Curve", "LFOC", 0.0f);
+	hr = DeclareParameterSlider(&m_SliderValue[2], ID_SLIDER_3, "VDJscript", "VDJS", 0.0f);
+	hr = DeclareParameterSlider(&m_SliderValue[3], ID_SLIDER_4, "SliderMin", "SMIN", 0.0f);
+	hr = DeclareParameterSlider(&m_SliderValue[4], ID_SLIDER_5, "SliderMax", "SMAX", 1.0f);
 	hr = DeclareParameterSwitch(&m_Inverted, ID_SWITCH_1, "Inverted", "INV", 0.0f);
 	hr = DeclareParameterSwitch(&m_Reset, ID_SWITCH_2, "Reset", "R", 1.0f);
 	
@@ -62,7 +66,7 @@ HRESULT VDJ_API CSliderLFO::OnParameter(int id)
 {
 	if (id == ID_INIT)
 	{
-		for (int i = ID_SLIDER_1; i <= ID_SLIDER_3; i++) OnSlider(i);
+		for (int i = ID_SLIDER_1; i <= ID_SLIDER_5; i++) OnSlider(i);
 	}
 	else OnSlider(id);
 
@@ -124,20 +128,53 @@ HRESULT CSliderLFO::OnSlider(int id)
 					break;
 
 				case 2:
-					wsprintf(m_SliderTypeName, "crossfader");
+					wsprintf(m_SliderTypeName, "filter");
 					break;
 
 				case 3:
-					wsprintf(m_SliderTypeName, "video_crossfader");
+					wsprintf(m_SliderTypeName, "eq_low");
 					break;
 
 				case 4:
-					wsprintf(m_SliderTypeName, "video_fx_slider");
+					wsprintf(m_SliderTypeName, "eq_mid");
 					break;
 
 				case 5:
+					wsprintf(m_SliderTypeName, "eq_high");
+					break;
+
+				case 6:
+					wsprintf(m_SliderTypeName, "crossfader");
+					break;
+
+				case 7:
+					wsprintf(m_SliderTypeName, "video_crossfader");
+					break;
+
+				case 8:
+					wsprintf(m_SliderTypeName, "video_fx_slider");
+					break;
+
+				case 9:
+					wsprintf(m_SliderTypeName, "master_volume");
+					break;
+
+				case 10:
 					wsprintf(m_SliderTypeName, "master_balance");
 					break;
+
+				case 11:
+					wsprintf(m_SliderTypeName, "sampler_volume_master");
+					break;
+
+				case 12:
+					wsprintf(m_SliderTypeName, "key_smooth");
+					break;
+
+				case 13:
+					wsprintf(m_SliderTypeName, "pitch");
+					break;
+
 			}
 			
 			hr = GetInfo(m_SliderTypeName, &result);
@@ -145,6 +182,18 @@ HRESULT CSliderLFO::OnSlider(int id)
 			{
 				m_SliderTypeValueStart = (float)result;
 			}
+			break;
+
+		case ID_SLIDER_4:
+			m_SliderMin = m_SliderValue[3];
+			if (m_SliderMin > m_SliderMax) m_SliderMin = m_SliderMax - 0.001f;
+			if (m_SliderMin > 0.999f) m_SliderMin = 0.999f;
+			break;
+
+		case ID_SLIDER_5:
+			m_SliderMax = m_SliderValue[4];
+			if (m_SliderMax < m_SliderMin) m_SliderMax = m_SliderMin + 0.001f;
+			if (m_SliderMax < 0.001f) m_SliderMax = 0.001f;
 			break;
 	}
 
@@ -186,6 +235,13 @@ HRESULT VDJ_API CSliderLFO::OnGetParameterString(int id, char *outParam, int out
 			sprintf_s(outParam, outParamSize, "%s", m_SliderTypeName);
 			break;
 
+		case ID_SLIDER_4:
+			sprintf_s(outParam, outParamSize, "%.3f", m_SliderMin);
+			break;
+
+		case ID_SLIDER_5:
+			sprintf_s(outParam, outParamSize, "%.3f", m_SliderMax);
+			break;
 	}
 	return S_OK;
 }
@@ -223,6 +279,8 @@ HRESULT VDJ_API CSliderLFO::OnProcessSamples(float *buffer, int nb)
 	xBeat = fmod(SongPosBeats, m_Delay) / m_Delay;
 
 	y = LFO(m_LFOcurve, xBeat);  // LFO sur 'Delay' beat(s)
+
+	y = ScalingLFO(y);
 
 	if (m_Inverted)
 	{
@@ -263,6 +321,15 @@ float CSliderLFO::LFO(LFOCURVE type, double x)
 	}
 
 	return float(y);
+}
+//------------------------------------------------------------------------------
+float CSliderLFO::ScalingLFO(float x)
+{
+	float y = 0.0f;
+
+	y = m_SliderMin + x * (m_SliderMax - m_SliderMin);
+
+	return y;
 }
 
 
