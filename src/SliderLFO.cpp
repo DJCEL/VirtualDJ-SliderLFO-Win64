@@ -308,7 +308,7 @@ float CSliderLFO::LFO(LFOCURVE type, double x)
 
 		case SAWTOOTH:
 			y = fmod(x, 1.0);
-			//ValLFO = 1.0 - fmod(x, 1.0);
+			//y = 1.0 - fmod(x, 1.0);
 			break;
 
 		case TRIANGLE:
@@ -331,6 +331,7 @@ float CSliderLFO::ScalingLFO(float x)
 
 	return y;
 }
+
 
 
 
